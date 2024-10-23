@@ -115,7 +115,7 @@ class AppleMusicApi:
         self,
         song_id: str,
         extend: str = "extendedAssetUrls",
-        include: str = "lyrics,albums",
+        include: str = "lyrics,albums,artwork",
     ) -> dict:
         response = self.session.get(
             f"{self.AMP_API_URL}/v1/catalog/{self.storefront}/songs/{song_id}",

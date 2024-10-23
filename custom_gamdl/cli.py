@@ -115,7 +115,7 @@ def load_config_file(
 @click.option(
     "--config-path",
     type=Path,
-    default=Path.home() / ".gamdl" / "config.json",
+    default=Path.home() / ".custom_gamdl" / "config.json",
     help="Path to config file.",
 )
 @click.option(
@@ -510,6 +510,10 @@ def main(
                     logger.debug("Getting webplayback")
                     webplayback = apple_music_api.get_webplayback(track_metadata["id"])
                     tags = downloader_song.get_tags(webplayback, lyrics.unsynced)
+                    cover_url = downloader.get_cover_url(track_metadata)
+                    print(f"Cover:{cover_url}")
+                    print(f"Title: {tags['title']}")
+                    print(f"Album: {tags['artist']}")
                     if playlist_track:
                         tags = {
                             **tags,

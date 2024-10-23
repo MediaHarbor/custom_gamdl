@@ -1,5 +1,5 @@
 [project]
-name = "gamdl"
+name = "custom_gamdl"
 description = "A Python CLI app for downloading Apple Music songs/music videos/posts."
 requires-python = ">=3.8"
 authors = [{ name = "glomatico" }]
@@ -17,12 +17,12 @@ readme = "README.md"
 dynamic = ["version"]
 
 [project.urls]
-homepage = "https://github.com/glomatico/gamdl"
-repository = "https://github.com/glomatico/gamdl"
+homepage = "https://github.com/glomatico/custom_gamdl"
+repository = "https://github.com/glomatico/custom_gamdl"
 
 [build-system]
 requires = ["flit_core"]
 build-backend = "flit_core.buildapi"
 
 [project.scripts]
-gamdl = "gamdl.cli:main"
+custom_gamdl = "custom_gamdl.cli:main"

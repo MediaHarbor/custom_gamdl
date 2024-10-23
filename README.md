@@ -28,29 +28,29 @@ A Python CLI app for downloading Apple Music songs/music videos/posts.
     * Binaries can be obtained from here: https://www.bento4.com/downloads/.
  
 ## Installation
-1. Install the package `gamdl` using pip
+1. Install the package `custom_gamdl` using pip
     ```bash
-    pip install gamdl
+    pip install custom_gamdl
     ```
-2. Place your cookies file in the directory from which you will be running gamdl and name it `cookies.txt`.
+2. Place your cookies file in the directory from which you will be running custom_gamdl and name it `cookies.txt`.
 
 ## Usage
 ```bash
-gamdl [OPTIONS] URLS...
+custom_gamdl [OPTIONS] URLS...
 ```
 
 ### Examples
 * Download a song
     ```bash
-    gamdl "https://music.apple.com/us/album/never-gonna-give-you-up-2022-remaster/1624945511?i=1624945512"
+    custom_gamdl "https://music.apple.com/us/album/never-gonna-give-you-up-2022-remaster/1624945511?i=1624945512"
     ```
 * Download an album
     ```bash
-    gamdl "https://music.apple.com/us/album/whenever-you-need-somebody-2022-remaster/1624945511"
+    custom_gamdl "https://music.apple.com/us/album/whenever-you-need-somebody-2022-remaster/1624945511"
     ```
 * Choose which albums or music videos to download from an artist
     ```bash
-    gamdl "https://music.apple.com/us/artist/rick-astley/669771"
+    custom_gamdl "https://music.apple.com/us/artist/rick-astley/669771"
     ```
 
 ### Interactive prompt controls
@@ -60,9 +60,9 @@ gamdl [OPTIONS] URLS...
 * Enter - Confirm selection
 
 ## Configuration
-gamdl can be configured by using the command line arguments or the config file.
+custom_gamdl can be configured by using the command line arguments or the config file.
 
-The config file is created automatically when you run gamdl for the first time at `~/.gamdl/config.json` on Linux and `%USERPROFILE%\.gamdl\config.json` on Windows.
+The config file is created automatically when you run custom_gamdl for the first time at `~/.custom_gamdl/config.json` on Linux and `%USERPROFILE%\.custom_gamdl\config.json` on Windows.
 
 Config file values can be overridden using command line arguments.
 | Command line argument / Config file key                         | Description                                                                  | Default value                |
@@ -74,7 +74,7 @@ Config file values can be overridden using command line arguments.
 | `--save-playlist` / `save_playlist`                             | Save a M3U8 playlist file when downloading a playlist.                       | `false`                      |
 | `--synced-lyrics-only` / `synced_lyrics_only`                   | Download only the synced lyrics.                                             | `false`                      |
 | `--no-synced-lyrics` / `no_synced_lyrics`                       | Don't download the synced lyrics.                                            | `false`                      |
-| `--config-path` / -                                             | Path to config file.                                                         | `<home>/.gamdl/config.json`  |
+| `--config-path` / -                                             | Path to config file.                                                         | `<home>/.custom_gamdl/config.json`  |
 | `--log-level` / `log_level`                                     | Log level.                                                                   | `INFO`                       |
 | `--print-exceptions` / `print_exceptions`                       | Print exceptions.                                                            | `false`                      |
 | `--cookies-path`, `-c` / `cookies_path`                         | Path to .txt cookies file.                                                   | `./cookies.txt`              |
@@ -178,20 +178,20 @@ The following codecs are also available, **but are not guaranteed to work**, as 
 * `ac3`
 * `alac`
 * `ask`
-    * When using this option, gamdl will ask you which codec from this list to use that is available for the song.
+    * When using this option, custom_gamdl will ask you which codec from this list to use that is available for the song.
 
 ### Music videos codecs
 The following codecs are available:
 * `h264` (up to 1080p, with AAC 256kbps)
 * `h265` (up to 2160p, with AAC 256kpbs)
 * `ask`
-    * When using this option, gamdl will ask you which audio and video codec to use that is available for the music video.
+    * When using this option, custom_gamdl will ask you which audio and video codec to use that is available for the music video.
   
 ### Post videos/extra videos qualities
 The following qualities are available:
 * `best` (up to 1080p, with AAC 256kbps)
 * `ask`
-    * When using this option, gamdl will ask you which video quality to use that is available for the video.
+    * When using this option, custom_gamdl will ask you which video quality to use that is available for the video.
 
 Post videos doesn't require remuxing and are limited to `ytdlp` download mode.
 

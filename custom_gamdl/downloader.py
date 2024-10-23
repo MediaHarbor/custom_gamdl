@@ -341,18 +341,22 @@ class Downloader:
             self.download_nm3u8dlre(path, stream_url)
 
     def download_ytdlp(self, path: Path, stream_url: str):
-        with YoutubeDL(
-            {
-                "quiet": True,
-                "no_warnings": True,
-                "outtmpl": str(path),
-                "allow_unplayable_formats": True,
-                "fixup": "never",
-                "allowed_extractors": ["generic"],
-                "noprogress": self.silent,
-            }
-        ) as ydl:
-            ydl.download(stream_url)
+        ydl_opts = {
+            "quiet": True,
+            "no_warnings": True,
+            "outtmpl": str(path),
+            "allow_unplayable_formats": True,
+            "fixup": "never",
+            "progress_hooks": [self.progress_hook],  # Add a progress hook
+        }
+        with YoutubeDL(ydl_opts) as ydl:
+            ydl.download([stream_url])
+    
+    def progress_hook(self, d):
+        if d['status'] == 'downloading':
+            percentage = d['_percent_str'].strip()
+            print(f"Downloading: {percentage}")
+
 
     def download_nm3u8dlre(self, path: Path, stream_url: str):
         path.parent.mkdir(parents=True, exist_ok=True)
