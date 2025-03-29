@@ -24,6 +24,7 @@ from .enums import CoverFormat, DownloadMode, RemuxMode
 from .hardcoded_wvd import HARDCODED_WVD
 from .itunes_api import ItunesApi
 from .models import DownloadQueue, UrlInfo
+from .utils import raise_response_exception
 
 
 class Downloader:
@@ -255,7 +256,7 @@ class Downloader:
         playlist_track: int,
     ) -> dict:
         tags = {
-            "playlist_artist": playlist_attributes["curatorName"],
+            "playlist_artist": playlist_attributes.get("curatorName", "Apple Music"),
             "playlist_id": playlist_attributes["playParams"]["id"],
             "playlist_title": playlist_attributes["name"],
             "playlist_track": playlist_track,
@@ -311,8 +312,8 @@ class Downloader:
         return f"{minutes:02d}:{seconds:02d}"
 
     def sanitize_date(self, date: str) -> datetime.datetime:
-        return datetime.datetime.fromisoformat(date).strftime(self.template_date)
-    
+        return datetime.datetime.fromisoformat(date[:-1]).strftime(self.template_date)
+
     def get_decryption_key(self, pssh: str, track_id: str) -> str:
         try:
             pssh_obj = PSSH(pssh.split(",")[-1])
@@ -340,6 +341,18 @@ class Downloader:
             self.download_nm3u8dlre(path, stream_url)
 
     def download_ytdlp(self, path: Path, stream_url: str):
+        with YoutubeDL(
+            {
+                "quiet": True,
+                "no_warnings": True,
+                "outtmpl": str(path),
+                "allow_unplayable_formats": True,
+                "fixup": "never",
+                "allowed_extractors": ["generic"],
+                "noprogress": self.silent,
+            }
+        ) as ydl:
+            ydl.download(stream_url)
         ydl_opts = {
             "quiet": True,
             "no_warnings": True,
@@ -423,7 +436,10 @@ class Downloader:
             ),
         )
 
-    def get_cover_file_extension(self, cover_url: str) -> str:
+    def get_cover_file_extension(self, cover_url: str) -> str | None:
+        cover_bytes = self.get_url_response_bytes(cover_url)
+        if cover_bytes is None:
+            return None
         image_obj = Image.open(io.BytesIO(self.get_url_response_bytes(cover_url)))
         image_format = image_obj.format.lower()
         return IMAGE_FILE_EXTENSION_MAP.get(image_format, f".{image_format}")
@@ -459,7 +475,12 @@ class Downloader:
     @functools.lru_cache()
     def get_url_response_bytes(url: str) -> bytes:
         response = requests.get(url)
-        response.raise_for_status()
+        if response.status_code == 200:
+            return response.content
+        elif response.status_code == 404:
+            return None
+        else:
+            raise_response_exception(response)
         return response.content
 
     def apply_tags(
@@ -502,16 +523,18 @@ class Downloader:
             "cover" not in self.exclude_tags_list
             and self.cover_format != CoverFormat.RAW
         ):
-            mp4_tags["covr"] = [
-                MP4Cover(
-                    self.get_url_response_bytes(cover_url),
-                    imageformat=(
-                        MP4Cover.FORMAT_JPEG
-                        if self.cover_format == CoverFormat.JPG
-                        else MP4Cover.FORMAT_PNG
-                    ),
-                )
-            ]
+            cover_bytes = self.get_url_response_bytes(cover_url)
+            if cover_bytes is not None:
+                mp4_tags["covr"] = [
+                    MP4Cover(
+                        self.get_url_response_bytes(cover_url),
+                        imageformat=(
+                            MP4Cover.FORMAT_JPEG
+                            if self.cover_format == CoverFormat.JPG
+                            else MP4Cover.FORMAT_PNG
+                        ),
+                    )
+                ]
         mp4 = MP4(path)
         mp4.clear()
         mp4.update(mp4_tags)

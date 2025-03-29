@@ -9,6 +9,8 @@ from pathlib import Path
 
 import requests
 
+from .utils import raise_response_exception
+
 
 class AppleMusicApi:
     APPLE_MUSIC_HOMEPAGE_URL = "https://beta.music.apple.com"
@@ -37,6 +39,9 @@ class AppleMusicApi:
             cookies.load(ignore_discard=True, ignore_expires=True)
             self.session.cookies.update(cookies)
             self.storefront = self.session.cookies.get_dict()["itua"]
+            media_user_token = self.session.cookies.get_dict()["media-user-token"]
+        else:
+            media_user_token = ""
         self.session.headers.update(
             {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:95.0) Gecko/20100101 Firefox/95.0",
@@ -44,9 +49,7 @@ class AppleMusicApi:
                 "Accept-Language": "en-US,en;q=0.5",
                 "Accept-Encoding": "gzip, deflate, br",
                 "content-type": "application/json",
-                "Media-User-Token": self.session.cookies.get_dict().get(
-                    "media-user-token", ""
-                ),
+                "Media-User-Token": media_user_token,
                 "x-apple-renewal": "true",
                 "DNT": "1",
                 "Connection": "keep-alive",
@@ -68,12 +71,6 @@ class AppleMusicApi:
         self.session.headers.update({"authorization": f"Bearer {token}"})
         self.session.params = {"l": self.language}
 
-    @staticmethod
-    def _raise_response_exception(response: requests.Response):
-        raise Exception(
-            f"Request failed with status code {response.status_code}: {response.text}"
-        )
-
     def _check_amp_api_response(self, response: requests.Response):
         try:
             response.raise_for_status()
@@ -84,7 +81,7 @@ class AppleMusicApi:
             requests.exceptions.JSONDecodeError,
             AssertionError,
         ):
-            self._raise_response_exception(response)
+            raise_response_exception(response)
 
     def get_artist(
         self,
@@ -115,7 +112,7 @@ class AppleMusicApi:
         self,
         song_id: str,
         extend: str = "extendedAssetUrls",
-        include: str = "lyrics,albums,artwork",
+        include: str = "lyrics,albums",
     ) -> dict:
         response = self.session.get(
             f"{self.AMP_API_URL}/v1/catalog/{self.storefront}/songs/{song_id}",
@@ -253,7 +250,7 @@ class AppleMusicApi:
             requests.exceptions.JSONDecodeError,
             AssertionError,
         ):
-            self._raise_response_exception(response)
+            raise_response_exception(response)
         return webplayback[0]
 
     def get_widevine_license(
@@ -283,5 +280,5 @@ class AppleMusicApi:
             requests.exceptions.JSONDecodeError,
             AssertionError,
         ):
-            self._raise_response_exception(response)
+            raise_response_exception(response)
         return widevine_license

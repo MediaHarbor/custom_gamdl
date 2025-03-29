@@ -85,25 +85,48 @@ class DownloaderSong:
         ).execute()
         return selected
 
-    def get_pssh(
+    def _get_drm_data(
         self,
         drm_infos: dict,
         drm_ids: list,
+        drm_key: str,
     ) -> str | None:
         drm_info = next(
             (
                 drm_infos[drm_id]
                 for drm_id in drm_ids
-                if drm_infos[drm_id].get(
-                    "urn:uuid:edef8ba9-79d6-4ace-a3c8-27dcd51d21ed"
-                )
-                and drm_id != "1"
+                if drm_infos[drm_id].get(drm_key) and drm_id != "1"
             ),
             None,
         )
         if not drm_info:
             return None
-        return drm_info["urn:uuid:edef8ba9-79d6-4ace-a3c8-27dcd51d21ed"]["URI"]
+        return drm_info[drm_key]["URI"]
+
+    def get_widevine_pssh(
+        self,
+        drm_infos: dict,
+        drm_ids: list,
+    ) -> str | None:
+        return self._get_drm_data(
+            drm_infos,
+            drm_ids,
+            "urn:uuid:edef8ba9-79d6-4ace-a3c8-27dcd51d21ed",
+        )
+
+    def get_playready_pssh(self, drm_infos: dict, drm_ids: list) -> str | None:
+        return self._get_drm_data(
+            drm_infos,
+            drm_ids,
+            "com.microsoft.playready",
+        )
+
+    def get_fairplay_key(self, drm_infos: dict, drm_ids: list) -> str | None:
+        return self._get_drm_data(
+            drm_infos,
+            drm_ids,
+            "com.apple.streamingkeydelivery",
+        )
 
     def get_stream_info(self, track_metadata: dict) -> StreamInfo:
         m3u8_url = track_metadata["attributes"]["extendedAssetUrls"].get("enhancedHls")
@@ -128,8 +151,14 @@ class DownloaderSong:
         stream_info.stream_url = m3u8_obj.base_uri + playlist["uri"]
         variant_id = playlist["stream_info"]["stable_variant_id"]
         drm_ids = asset_infos[variant_id]["AUDIO-SESSION-KEY-IDS"]
-        pssh = self.get_pssh(drm_infos, drm_ids)
-        stream_info.pssh = pssh
+        widevine_pssh, playready_pssh, fairplay_key = (
+            self.get_widevine_pssh(drm_infos, drm_ids),
+            self.get_playready_pssh(drm_infos, drm_ids),
+            self.get_fairplay_key(drm_infos, drm_ids),
+        )
+        stream_info.widevine_pssh = widevine_pssh
+        stream_info.playready_pssh = playready_pssh
+        stream_info.fairplay_key = fairplay_key
         stream_info.codec = playlist["stream_info"]["codecs"]
         return stream_info
 
@@ -147,7 +176,10 @@ class DownloaderSong:
             secs = float(f"{mins_secs_ms[-2]}.{mins_secs_ms[-1]}")
             if len(mins_secs_ms) > 2:
                 mins = int(mins_secs_ms[-3])
-        return datetime.datetime.fromtimestamp((mins * 60) + secs + (ms / 1000))
+        return datetime.datetime.fromtimestamp(
+            (mins * 60) + secs + (ms / 1000),
+            tz=datetime.timezone.utc,
+        )
 
     def get_lyrics_synced_timestamp_lrc(self, timestamp_ttml: str) -> str:
         datetime_obj = self.parse_datetime_obj_from_timestamp_ttml(timestamp_ttml)
@@ -248,7 +280,7 @@ class DownloaderSong:
             "disc": tags_raw["discNumber"],
             "disc_total": tags_raw["discCount"],
             "gapless": tags_raw["gapless"],
-            "genre": tags_raw["genre"],
+            "genre": tags_raw.get("genre"),
             "genre_id": tags_raw["genreId"],
             "lyrics": lyrics_unsynced if lyrics_unsynced else None,
             "media_type": 1,
